@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var session = require('express-session');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -21,26 +21,36 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+app.use(session({secret: 'hello'}));
 
+var restrict = function(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied';
+    res.redirect('/login');
+  }
+};
 
-app.get('/', 
+app.get('/', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
+
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
@@ -77,7 +87,9 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-
+app.get('/login', function(req, res) {
+  res.render('login');
+});
 
 
 /************************************************************/
