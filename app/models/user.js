@@ -9,8 +9,9 @@ var User = db.Model.extend({
   links: function() {
     return this.hasMany(Link);
   },
-  initialize: function(password){
+  initialize: function(){
     this.on('creating', function(model, attrs, options){
+      var password = model.get('password');
       bcrypt.hash(password, 10, function(err, hash){
         if (err) throw err;
         model.set('password', hash);

@@ -241,8 +241,8 @@ describe('', function() {
 
   }); // 'Priviledged Access'
 
-  xdescribe('Account Creation:', function(){
-
+  describe('Account Creation:', function(){
+// Test 11
     it('Signup creates a user record', function(done) {
       var options = {
         'method': 'POST',
@@ -270,7 +270,7 @@ describe('', function() {
           });
       });
     });
-
+// Test 12
     it('Signup logs in a new user', function(done) {
       var options = {
         'method': 'POST',
