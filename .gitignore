@@ -7,3 +7,5 @@ node_modules
 .floobit
 .floo
 .flooignore
+
+npm.log

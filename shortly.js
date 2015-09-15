@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
-app.use(session({secret: 'hello'}));
+app.use(session({secret: 'hello'}));  // More attributes exist for session
 
 var restrict = function(req, res, next) {
   if (req.session.user) {
@@ -37,6 +37,7 @@ var restrict = function(req, res, next) {
 app.get('/', restrict,
 function(req, res) {
   res.render('index');
+  res.end();
 });
 
 
@@ -89,35 +90,33 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-app.get('/login', function(req, res) {
-  console.log('Login GET Handler');
+app.get('/login', function(req, res) {  // if session exists, redirect to '/''
   res.render('login');
 });
 
 app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
-  console.log('Login POST handler');
 
-  new User({ username: username }).fetch().then(function(user) {
+  new User({ 'username': username })
+  .fetch()
+  .then(function(user) {
     if (user) {
-      bcrypt.compare(password, user.attributes.password, function(err, result){
+      bcrypt.compare(password, user.get('password'), function(err, result){
         if (err) throw err;
         if (result) {
-          console.log ('Password Success !!');
           req.session.regenerate(function(){
-            req.session.user = username;
+            req.session.user = user.get('username');
             res.redirect('/');
           });
         } else {
-          res.render('login');
+          res.redirect('/login');
         }
       });
     } else {
-      res.render('login');
+      res.redirect('/login');
     }
   });
-
 });
 
 /************************************************************/

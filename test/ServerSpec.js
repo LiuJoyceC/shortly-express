@@ -63,11 +63,13 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    xbeforeEach(function(done){      // create a user that we can then log-in with
+    beforeEach(function(done){      // create a user that we can then log-in with
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
-      }).save().then(function(){
+      })
+      .save()
+      .then(function(){
         var options = {
           'method': 'POST',
           'followAllRedirects': true,
@@ -79,6 +81,7 @@ describe('', function() {
         };
         // login via form and save session info
         requestWithSession(options, function(error, res, body) {
+          if (error) throw error;
           done();
         });
       });
@@ -139,7 +142,6 @@ describe('', function() {
             //.where('title', '=', 'Funny animal pictures, funny animals, funniest dogs')
             .where('title', '=', 'Funny pictures of animals, funny dog pictures')
             .then(function(urls) {
-              console.log('urls query returned ' + JSON.stringify(urls));
               if (urls['0'] && urls['0']['title']) {
                 var foundTitle = urls['0']['title'];
               }
@@ -199,14 +201,15 @@ describe('', function() {
         });
       });
 // Test 7
-      xit('Returns all of the links to display on the links page', function(done) {
+      it('Returns all of the links to display on the links page', function(done) {
         var options = {
           'method': 'GET',
           'uri': 'http://127.0.0.1:4568/links'
         };
 
         requestWithSession(options, function(error, res, body) {
-          expect(body).to.include('"title":"Funny animal pictures, funny animals, funniest dogs"');
+          expect(body).to.include('"title":"Funny pictures of animals, funny dog pictures"');
+          //expect(body).to.include('"title":"Funny animal pictures, funny animals, funniest dogs"');
           expect(body).to.include('"code":"' + link.get('code') + '"');
           done();
         });

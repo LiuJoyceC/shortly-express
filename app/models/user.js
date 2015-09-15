@@ -9,14 +9,12 @@ var User = db.Model.extend({
   links: function() {
     return this.hasMany(Link);
   },
-  initialize: function(){
-    this.on('creating', function(model, attrs, options){
-      var password = model.get('password');
-      bcrypt.hash(password, 10, function(err, hash){
-        if (err) throw err;
-        model.set('password', hash);
-      });
-    });
+  initialize: function(params){
+    this.set('username', params.username);
+    bcrypt.hash(params.password, null, null, function(err, hash){
+      if (err) throw err;
+      this.set('password', hash);
+    }.bind(this));
   }
 });
 
