@@ -25,30 +25,25 @@ app.use(express.static(__dirname + '/public'));
 
 app.use(session({secret: 'hello'}));  // More attributes exist for session
 
-var restrict = function(req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    req.session.error = 'Access denied';
-    res.redirect('/login');
-  }
-};
 
-app.get('/', restrict,
-function(req, res) {
-  res.render('index');
-  res.end();
-});
-
-
-app.get('/create', restrict,
+app.get('/', util.checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', restrict,
+
+app.get('/create', util.checkUser,
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
+  res.render('index');
+});
+
+app.get('/links', util.checkUser,
+function(req, res) {
+  Links
+  .reset()
+  .query('where', 'user_id', '=', req.session.user)
+  .fetch()
+  .then(function(links) {
     res.send(200, links.models);
   });
 });
@@ -62,7 +57,10 @@ function(req, res) {
     return res.send(404);
   }
 
-  new Link({ url: uri }).fetch().then(function(found) {
+  new Link({ url: uri })
+  .query('where', 'user_id', '=', req.session.user)
+  .fetch()
+  .then(function(found) {
     if (found) {
       res.send(200, found.attributes);
     } else {
@@ -75,7 +73,8 @@ function(req, res) {
         var link = new Link({
           url: uri,
           title: title,
-          base_url: req.headers.origin
+          base_url: req.headers.origin,
+          user_id: req.session.user
         });
 
         link.save().then(function(newLink) {
@@ -91,7 +90,11 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 app.get('/login', function(req, res) {  // if session exists, redirect to '/''
-  res.render('login');
+  if (req.session.user) {
+    res.redirect('/');
+  } else {
+    res.render('login');
+  }
 });
 
 app.post('/login', function(req, res) {
@@ -106,7 +109,7 @@ app.post('/login', function(req, res) {
         if (err) throw err;
         if (result) {
           req.session.regenerate(function(){
-            req.session.user = user.get('username');
+            req.session.user = user.get('id');
             res.redirect('/');
           });
         } else {
@@ -119,6 +122,38 @@ app.post('/login', function(req, res) {
   });
 });
 
+
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
+
+app.post('/signup', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({'username': username})
+  .fetch()
+  .then(function(user){
+    if(user) {
+      res.redirect('/signup');  // display message "username already exists"
+    } else {
+      new User({'username': username, 'password': password})
+      .save()
+      .then(function(user){
+        req.session.regenerate(function(){
+          req.session.user = user.get('id');
+          res.redirect('/');
+        });
+      });
+    }
+  });
+});
+
+app.get('/logout', function(req, res) {
+  req.session.destroy(function() {
+    res.redirect('/login');
+  });
+});
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
@@ -126,7 +161,9 @@ app.post('/login', function(req, res) {
 /************************************************************/
 
 app.get('/*', function(req, res) {
-  new Link({ code: req.params[0] }).fetch().then(function(link) {
+  new Link({ code: req.params[0] })
+  .query('where', 'user_id', '=', req.session.user)
+  .fetch().then(function(link) {
     if (!link) {
       res.redirect('/');
     } else {
@@ -136,7 +173,8 @@ app.get('/*', function(req, res) {
 
       click.save().then(function() {
         db.knex('urls')
-          .where('code', '=', link.get('code'))
+          .where('user_id', '=', req.session.user)
+          .andWhere('code', '=', link.get('code'))
           .update({
             visits: link.get('visits') + 1,
           }).then(function() {

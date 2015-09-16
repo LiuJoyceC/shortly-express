@@ -292,7 +292,7 @@ describe('', function() {
 
   }); // 'Account Creation'
 
-  xdescribe('Account Login:', function(){
+  describe('Account Login:', function(){
 
     var requestWithSession = request.defaults({jar: true});
 
@@ -301,10 +301,11 @@ describe('', function() {
           'username': 'Phillip',
           'password': 'Phillip'
       }).save().then(function(){
-        done()
+        done();
       });
-    })
+    });
 
+// Test 13
     it('Logs in existing users', function(done) {
       var options = {
         'method': 'POST',
@@ -321,6 +322,7 @@ describe('', function() {
       });
     });
 
+// Test 14
     it('Users that do not exist are kept on login page', function(done) {
       var options = {
         'method': 'POST',
